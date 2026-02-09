@@ -10,7 +10,7 @@ function initQuiz(data) {
   data.questions.forEach(q => {
     quiz.innerHTML += `
       <div class="question">
-        <label>${q.id}. ${q.text}</label><br>
+        <label>${q.text}</label><br>
         <input type="range" min="1" max="5" value="3" id="q${q.id}">
       </div>
     `;
@@ -29,7 +29,7 @@ function calculate(data) {
     scores[q.category].push(v);
   });
 
-  const avg = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+  const avg = arr => arr.reduce((a,b)=>a+b,0) / arr.length;
 
   finalResult = {
     calmness: avg(scores.calmness),
@@ -40,8 +40,7 @@ function calculate(data) {
 
   if (finalResult.calmness < 3) finalResult.path = "آرامش ذهن";
   else if (finalResult.clarity < 3) finalResult.path = "خودشناسی";
-  else if (finalResult.energy >= 3.5) finalResult.path = "موفقیت شغلی";
-  else finalResult.path = "آرامش + خودشناسی";
+  else finalResult.path = "موفقیت شغلی";
 
   showResult();
 }
@@ -56,6 +55,6 @@ function showResult() {
     <b>مسیر پیشنهادی:</b> ${finalResult.path}
   `;
 
+  // ✅ فراخوانی امن
   window.startChat(finalResult.path);
-
 }

@@ -1,6 +1,6 @@
 /*************************************************
- * Chat Logic – Stage 4.5
- * UX Upgrade (Buttons) + Safety Layer
+ * Chat Logic – Stage 4.7
+ * UX Buttons + Safety Layer + Session Memory
  *************************************************/
 
 const AI_ENABLED = false;
@@ -25,6 +25,32 @@ const chatContext = {
   detectedEmotion: null,
   selectedChoice: null
 };
+
+/* =========================
+   Session Memory
+========================= */
+const MEMORY_KEY = "calm_chat_context";
+
+function saveMemory() {
+  sessionStorage.setItem(MEMORY_KEY, JSON.stringify(chatContext));
+}
+
+function loadMemory() {
+  const data = sessionStorage.getItem(MEMORY_KEY);
+  if (!data) return false;
+
+  try {
+    const parsed = JSON.parse(data);
+    Object.assign(chatContext, parsed);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function clearMemory() {
+  sessionStorage.removeItem(MEMORY_KEY);
+}
 
 /* =========================
    Safety Layer – Red Flags
@@ -83,8 +109,11 @@ function addChoiceButtons() {
     btn.onclick = () => {
       wrapper.remove();
       addUserMessage(choice.label);
+
       chatContext.selectedChoice = choice.id;
       chatContext.state = STATES.ACTION;
+      saveMemory();
+
       handleAction();
     };
     wrapper.appendChild(btn);
@@ -100,6 +129,7 @@ function addChoiceButtons() {
 function handleInit() {
   addBotMessage("سلام 🌱 دوست دارم بدونم الان حالت چطوره؟");
   chatContext.state = STATES.EMOTION;
+  saveMemory();
 }
 
 function handleEmotion(userMessage) {
@@ -113,6 +143,7 @@ function handleEmotion(userMessage) {
   addChoiceButtons();
 
   chatContext.state = STATES.CHOICE;
+  saveMemory();
 }
 
 function handleAction() {
@@ -123,6 +154,8 @@ function handleAction() {
     "• هیچ کاری لازم نیست درست بشه\n\n" +
     "من اینجام 🌱"
   );
+
+  saveMemory();
 }
 
 /* =========================
@@ -134,6 +167,8 @@ function handleSafeState() {
     "لازم نیست قوی باشی یا تصمیم بگیری.\n" +
     "همین که گفتی، کافیه 🌱"
   );
+
+  saveMemory();
 }
 
 /* =========================
@@ -144,6 +179,7 @@ function routeMessage(userMessage) {
 
   if (detectRedFlag(userMessage)) {
     chatContext.state = STATES.SAFE;
+    saveMemory();
     handleSafeState();
     return;
   }
@@ -167,11 +203,42 @@ function routeMessage(userMessage) {
 }
 
 /* =========================
+   Restore Session (on load)
+========================= */
+function restoreSession() {
+  if (!loadMemory()) {
+    handleInit();
+    return;
+  }
+
+  if (chatContext.detectedEmotion) {
+    addBotMessage("خوش اومدی 🌱 همون‌جایی هستیم که بودیم.");
+  }
+
+  switch (chatContext.state) {
+    case STATES.CHOICE:
+      addBotMessage("دوست داری روی کدوم تمرکز کنیم؟");
+      addChoiceButtons();
+      break;
+
+    case STATES.ACTION:
+      handleAction();
+      break;
+
+    case STATES.SAFE:
+      handleSafeState();
+      break;
+
+    default:
+      handleInit();
+  }
+}
+
+/* =========================
    Public API (Global)
 ========================= */
 window.startChat = function () {
-  chatContext.state = STATES.INIT;
-  handleInit();
+  restoreSession();
 };
 
 window.sendMessage = function () {

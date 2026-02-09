@@ -1,6 +1,6 @@
 /*************************************************
- * Chat Logic – Stage 4
- * State Machine + Safety Layer (Frontend Only)
+ * Chat Logic – Stage 4.5
+ * UX Upgrade (Buttons) + Safety Layer
  *************************************************/
 
 const AI_ENABLED = false;
@@ -35,12 +35,10 @@ function detectRedFlag(text) {
   const redFlags = [
     "خسته شدم از همه چی",
     "دیگه نمی‌کشم",
-    "بی‌فایده",
-    "هیچی مهم نیست",
-    "پوچ",
     "بریدم",
-    "دیگه توان ندارم",
-    "همه چی تمومه"
+    "همه چی تمومه",
+    "پوچ",
+    "بی‌فایده"
   ];
 
   return redFlags.some(flag => text.includes(flag));
@@ -67,6 +65,35 @@ function addUserMessage(text) {
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+function addChoiceButtons() {
+  const chatBox = document.getElementById("chat-box");
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "choice-buttons";
+
+  const choices = [
+    { id: "calm", label: "🧘 آروم شدن ذهن" },
+    { id: "clarity", label: "🔍 شفاف شدن فکرها" },
+    { id: "action", label: "👣 یه قدم کوچیک" }
+  ];
+
+  choices.forEach(choice => {
+    const btn = document.createElement("button");
+    btn.innerText = choice.label;
+    btn.onclick = () => {
+      wrapper.remove();
+      addUserMessage(choice.label);
+      chatContext.selectedChoice = choice.id;
+      chatContext.state = STATES.ACTION;
+      handleAction();
+    };
+    wrapper.appendChild(btn);
+  });
+
+  chatBox.appendChild(wrapper);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
 /* =========================
    State Handlers
 ========================= */
@@ -79,35 +106,22 @@ function handleEmotion(userMessage) {
   chatContext.detectedEmotion = userMessage;
 
   addBotMessage(
-    "ممنون که گفتی. از حرف‌هات حس می‌کنم یه چیزی توی ذهنت شلوغه."
+    "ممنون که گفتی. حس می‌کنم الان مهم‌ترین چیز اینه که به خودت فضا بدی."
   );
 
-  addBotMessage(
-    "دوست داری الان روی کدوم تمرکز کنیم؟\n\n" +
-    "1️⃣ آروم شدن ذهن\n" +
-    "2️⃣ شفاف شدن فکرها\n" +
-    "3️⃣ یه قدم خیلی کوچیک عملی"
-  );
+  addBotMessage("دوست داری الان روی کدوم تمرکز کنیم؟");
+  addChoiceButtons();
 
   chatContext.state = STATES.CHOICE;
 }
 
-function handleChoice(userMessage) {
-  chatContext.selectedChoice = userMessage;
-
-  addBotMessage("باشه. فقط یه تمرین خیلی ساده با هم انجام بدیم.");
-
-  chatContext.state = STATES.ACTION;
-  handleAction();
-}
-
 function handleAction() {
   addBotMessage(
-    "الان برای ۳۰ ثانیه:\n" +
+    "باشه. الان فقط برای ۳۰ ثانیه:\n" +
     "• نفس عمیق بکش\n" +
     "• شونه‌هات رو شُل کن\n" +
-    "• لازم نیست چیزی رو درست کنی\n\n" +
-    "اگه خواستی بعدش می‌تونیم ادامه بدیم."
+    "• هیچ کاری لازم نیست درست بشه\n\n" +
+    "من اینجام 🌱"
   );
 }
 
@@ -116,16 +130,9 @@ function handleAction() {
 ========================= */
 function handleSafeState() {
   addBotMessage(
-    "حسی که گفتی نشون می‌ده الان فشار زیادی روی توئه.\n\n" +
-    "لازم نیست همین الان کاری انجام بدی یا قوی باشی.\n" +
-    "فقط بدون من اینجام و شنونده‌ام 🌱"
-  );
-
-  addBotMessage(
-    "اگه دوست داری، می‌تونی:\n" +
-    "• فقط نفس بکشی\n" +
-    "• یا گفتگو رو همین‌جا متوقف کنیم\n" +
-    "• یا بعداً برگردی"
+    "از حرف‌هات حس می‌کنم الان فشار زیادی روی توئه.\n\n" +
+    "لازم نیست قوی باشی یا تصمیم بگیری.\n" +
+    "همین که گفتی، کافیه 🌱"
   );
 }
 
@@ -135,7 +142,6 @@ function handleSafeState() {
 function routeMessage(userMessage) {
   chatContext.lastUserMessage = userMessage;
 
-  // ✅ Safety check (global)
   if (detectRedFlag(userMessage)) {
     chatContext.state = STATES.SAFE;
     handleSafeState();
@@ -147,12 +153,8 @@ function routeMessage(userMessage) {
       handleEmotion(userMessage);
       break;
 
-    case STATES.CHOICE:
-      handleChoice(userMessage);
-      break;
-
     case STATES.ACTION:
-      addBotMessage("هر وقت آماده بودی، می‌تونی دوباره صحبت کنی 🌱");
+      addBotMessage("هر وقت دوست داشتی می‌تونیم ادامه بدیم 🌱");
       break;
 
     case STATES.SAFE:

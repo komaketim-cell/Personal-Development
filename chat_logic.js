@@ -1,4 +1,14 @@
-console.log("✅ chat_logic.js (State Machine) loaded");
+console.log("✅ chat_logic.js (State Machine + AI Adapter) loaded");
+
+/* =====================================================
+   CONFIG
+===================================================== */
+
+// 🔴 وقتی AI واقعی وصل شد → true
+const AI_ENABLED = false;
+
+// endpoint نمونه (بعداً به backend خودت وصل می‌کنی)
+const AI_ENDPOINT = "/api/ai";
 
 /* =====================================================
    STATE MACHINE & CONTEXT
@@ -55,21 +65,68 @@ window.sendMessage = function () {
 ===================================================== */
 
 function routeMessage(text) {
+  if (AI_ENABLED) {
+    routeWithAI(text);
+  } else {
+    routeRuleBased(text);
+  }
+}
+
+/* =====================================================
+   RULE-BASED FLOW (Fallback / MVP)
+===================================================== */
+
+function routeRuleBased(text) {
   switch (chatContext.phase) {
     case ChatPhases.EMOTION:
       onEmotion(text);
       break;
-
     case ChatPhases.CHOICE:
       onChoice(text);
       break;
-
     case ChatPhases.ACTION:
       onAction(text);
       break;
-
     default:
       addBotMessage("یه لحظه صبر کن 🌱");
+  }
+}
+
+/* =====================================================
+   AI FLOW (Adapter)
+===================================================== */
+
+async function routeWithAI(text) {
+  try {
+    const payload = {
+      message: text,
+      context: chatContext
+    };
+
+    const response = await fetch(AI_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    /*
+      data = {
+        reply: "متن پاسخ AI",
+        newContext: { ... }
+      }
+    */
+
+    if (data.newContext) {
+      chatContext = { ...chatContext, ...data.newContext };
+    }
+
+    addBotMessage(data.reply);
+
+  } catch (e) {
+    console.error("AI error → fallback", e);
+    routeRuleBased(text);
   }
 }
 
@@ -139,7 +196,6 @@ function onAction(text) {
 function startCalmAction() {
   addBotMessage(
     `باشه 🌿<br>
-     یه تمرین کوتاه:<br>
      🔹 ۴ ثانیه دم<br>
      🔹 ۴ ثانیه نگه‌دار<br>
      🔹 ۶ ثانیه بازدم<br><br>
@@ -166,7 +222,7 @@ function startTalkAction() {
 }
 
 /* =====================================================
-   EMOTION DETECTION (MVP LEVEL)
+   EMOTION DETECTION (MVP)
 ===================================================== */
 
 function detectEmotion(text) {
@@ -180,7 +236,7 @@ function detectEmotion(text) {
   if (text.includes("گیج") || text.includes("نمی‌دونم")) {
     return {
       key: "confusion",
-      label: "یه حس سردرگمی توی حرف‌هات هست، و این قابل درکه 🌱"
+      label: "یه حس سردرگمی توی حرف‌هات هست 🌱"
     };
   }
 
@@ -193,7 +249,7 @@ function detectEmotion(text) {
 
   return {
     key: "neutral",
-    label: "ممنون که احساست رو با من در میون گذاشتی 🌸"
+    label: "ممنون که احساست رو گفتی 🌸"
   };
 }
 

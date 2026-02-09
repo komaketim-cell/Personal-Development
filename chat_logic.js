@@ -1,20 +1,37 @@
+// ✅ برای اطمینان از Load شدن
 console.log("✅ chat_logic.js loaded");
 
+/* =========================
+   START CHAT (GLOBAL)
+========================= */
 window.startChat = function (path) {
   const chatBox = document.getElementById("chatBox");
+  if (!chatBox) {
+    console.error("❌ chatBox not found");
+    return;
+  }
+
   chatBox.classList.remove("hidden");
 
   addBotMessage(
     `خوشحالم که اینجایی 🌿<br>
      بر اساس ارزیابی، تمرکز ما روی <b>${path}</b> هست.<br>
-     دوست دارم بدونم الان بیشتر چه احساسی داری؟`
+     دوست دارم اول بدونم: الان بیشتر چه احساسی داری؟`
   );
 
-  document.getElementById("sendBtn").onclick = sendMessage;
+  const sendBtn = document.getElementById("sendBtn");
+  if (sendBtn) {
+    sendBtn.onclick = window.sendMessage;
+  }
 };
 
+/* =========================
+   SEND MESSAGE (GLOBAL)
+========================= */
 window.sendMessage = function () {
   const input = document.getElementById("userInput");
+  if (!input) return;
+
   const text = input.value.trim();
   if (!text) return;
 
@@ -26,26 +43,36 @@ window.sendMessage = function () {
   }, 600);
 };
 
+/* =========================
+   UI HELPERS
+========================= */
 function addBotMessage(text) {
   const box = document.getElementById("chatMessages");
+  if (!box) return;
+
   box.innerHTML += `<div class="message bot">${text}</div>`;
   box.scrollTop = box.scrollHeight;
 }
 
 function addUserMessage(text) {
   const box = document.getElementById("chatMessages");
+  if (!box) return;
+
   box.innerHTML += `<div class="message user">${text}</div>`;
   box.scrollTop = box.scrollHeight;
 }
 
+/* =========================
+   SIMPLE AI LOGIC
+========================= */
 function generateResponse(text) {
   if (text.includes("استرس") || text.includes("خسته")) {
-    return "کاملاً قابل درکه 🌿<br>می‌خوای با یک تمرین تنفس کوتاه شروع کنیم؟";
+    return "کاملاً قابل درکه 🌿<br>دوست داری با یک تمرین تنفس کوتاه شروع کنیم؟";
   }
 
   if (text.includes("نمی‌دونم") || text.includes("گیج")) {
-    return "این حس طبیعی‌ه 🌱<br>بیشتر سردرگمی‌ات مربوط به کدوم بخش زندگیه؟";
+    return "این حس طبیعیه 🌱<br>بیشتر سردرگمی‌ات مربوط به کدوم بخش زندگیه؟";
   }
 
-  return "ممنون که گفتی 🌸<br>دوست داری الان روی آرامش، وضوح مسیر یا اقدام عملی تمرکز کنیم؟";
+  return "ممنون که گفتی 🌸<br>دوست داری روی آرامش، وضوح مسیر یا اقدام عملی تمرکز کنیم؟";
 }

@@ -56,5 +56,6 @@ function showResult() {
     <b>مسیر پیشنهادی:</b> ${finalResult.path}
   `;
 
-  startChat(finalResult.path);
+  window.startChat(finalResult.path);
+
 }

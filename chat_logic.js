@@ -1,17 +1,19 @@
-function startChat(path) {
+console.log("✅ chat_logic.js loaded");
+
+window.startChat = function (path) {
   const chatBox = document.getElementById("chatBox");
   chatBox.classList.remove("hidden");
 
   addBotMessage(
-    `خوشحالم که اینجایی 🌿  
-    بر اساس ارزیابی، بهتره تمرکزمون رو روی «${path}» بذاریم.
-    دوست دارم اول بدونم: الان بیشتر چه احساسی داری؟`
+    `خوشحالم که اینجایی 🌿<br>
+     بر اساس ارزیابی، تمرکز ما روی <b>${path}</b> هست.<br>
+     دوست دارم بدونم الان بیشتر چه احساسی داری؟`
   );
 
   document.getElementById("sendBtn").onclick = sendMessage;
-}
+};
 
-function sendMessage() {
+window.sendMessage = function () {
   const input = document.getElementById("userInput");
   const text = input.value.trim();
   if (!text) return;
@@ -22,7 +24,7 @@ function sendMessage() {
   setTimeout(() => {
     addBotMessage(generateResponse(text));
   }, 600);
-}
+};
 
 function addBotMessage(text) {
   const box = document.getElementById("chatMessages");
@@ -36,18 +38,14 @@ function addUserMessage(text) {
   box.scrollTop = box.scrollHeight;
 }
 
-function generateResponse(userText) {
-  if (userText.includes("استرس") || userText.includes("خسته")) {
-    return "کاملاً قابل درکه 🌿  
-    می‌خوای با یک تمرین تنفس ۶۰ ثانیه‌ای شروع کنیم؟";
+function generateResponse(text) {
+  if (text.includes("استرس") || text.includes("خسته")) {
+    return "کاملاً قابل درکه 🌿<br>می‌خوای با یک تمرین تنفس کوتاه شروع کنیم؟";
   }
 
-  if (userText.includes("نمی‌دونم") || userText.includes("گیج")) {
-    return "اشکالی نداره، این خودش یک نقطه شروعه.  
-    به نظرت بیشترین سردرگمی‌ات مربوط به کدوم بخش زندگیه؟";
+  if (text.includes("نمی‌دونم") || text.includes("گیج")) {
+    return "این حس طبیعی‌ه 🌱<br>بیشتر سردرگمی‌ات مربوط به کدوم بخش زندگیه؟";
   }
 
-  return "ممنون که به اشتراک گذاشتی 🌱  
-  من کنارتم، قدم‌به‌قدم جلو می‌ریم.  
-  دوست داری الان روی آرامش، وضوح مسیر یا اقدام عملی تمرکز کنیم؟";
+  return "ممنون که گفتی 🌸<br>دوست داری الان روی آرامش، وضوح مسیر یا اقدام عملی تمرکز کنیم؟";
 }

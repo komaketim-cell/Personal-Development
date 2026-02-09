@@ -56,5 +56,5 @@ function showResult() {
   `;
 
   // ✅ فراخوانی امن
-  window.startChat(finalResult.path);
+window.startChat(finalResult.path);
 }

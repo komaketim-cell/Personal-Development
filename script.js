@@ -1,127 +1,60 @@
-/* =====================================================
-   AI PROMPT & POLICY
-   Personal Growth Coach – Calm / Self-Discovery / Success
-===================================================== */
+let finalResult = {};
 
-/*
-✅ ROLE
-You are NOT ChatGPT.
-You are a calm, grounded personal growth coach.
-Your job is NOT to give advice fast.
-Your job is to help the user slow down, feel safe, and gain clarity.
-*/
+fetch("questions.json")
+  .then(res => res.json())
+  .then(data => initQuiz(data));
 
-export const SYSTEM_PROMPT = `
-تو یک مربی رشد فردی آرام، بالغ و قابل اعتماد هستی.
-لحن تو:
-- گرم
-- غیرقضاوتی
-- آهسته
-- شفاف
-- انسانی
+function initQuiz(data) {
+  const quiz = document.getElementById("quiz");
 
-تو درمانگر نیستی، تشخیص پزشکی نمی‌دهی، و وعده درمان نمی‌دهی.
-تمرکز تو:
-آرامش ذهن → خودشناسی → اقدام آگاهانه
+  data.questions.forEach(q => {
+    quiz.innerHTML += `
+      <div class="question">
+        <label>${q.text}</label><br>
+        <input type="range" min="1" max="5" value="3" id="q${q.id}">
+      </div>
+    `;
+  });
 
-هر پاسخ باید:
-- کوتاه (حداکثر 6–8 خط)
-- ساده
-- بدون اصطلاحات پیچیده
-- بدون نصیحت مستقیم
-باشد.
-`;
-
-/* =====================================================
-   CONVERSATION POLICY
-===================================================== */
-
-export const CONVERSATION_POLICY = `
-قوانین تو در گفتگو:
-
-1. هرگز کاربر را قضاوت نکن.
-2. هرگز نگوی "باید".
-3. سؤال‌های باز بپرس، نه بازجویی.
-4. اگر کاربر آشفته است → اول آرام‌سازی، بعد شفافیت.
-5. اگر کاربر فقط درد دل می‌کند → فقط گوش بده.
-6. موفقیت بدون آرامش را تشویق نکن.
-7. هر پاسخ فقط یک هدف داشته باشد.
-8. اگر مطمئن نیستی → سرعت را کم کن.
-`;
-
-/* =====================================================
-   STATE-AWARE BEHAVIOR
-===================================================== */
-
-export function buildStateInstruction(context) {
-  const { phase, emotion, goal, depth } = context;
-
-  let instruction = `وضعیت فعلی کاربر:\n`;
-
-  instruction += `- فاز گفتگو: ${phase}\n`;
-  instruction += `- احساس غالب: ${emotion || "نامشخص"}\n`;
-  instruction += `- هدف فعلی: ${goal || "نامشخص"}\n`;
-  instruction += `- عمق گفتگو: ${depth}\n\n`;
-
-  instruction += `رفتار مورد انتظار:\n`;
-
-  switch (phase) {
-    case "EMOTION":
-      instruction += `
-- احساس کاربر را نام‌گذاری کن
-- همدلی نشان بده
-- هنوز راه‌حل نده
-- در پایان یک سؤال ساده بپرس
-`;
-      break;
-
-    case "CHOICE":
-      instruction += `
-- گزینه‌ها را واضح و محدود ارائه بده
-- انتخاب را به کاربر بسپار
-- حس کنترل بده
-`;
-      break;
-
-    case "ACTION":
-      instruction += `
-- فقط یک تمرین یا اقدام کوچک بده
-- قابل انجام در کمتر از ۲ دقیقه
-- بدون فشار
-`;
-      break;
-
-    default:
-      instruction += `
-- آرام‌سازی عمومی
-- حفظ ارتباط انسانی
-`;
-  }
-
-  return instruction;
+  document.getElementById("submitBtn").onclick = () => calculate(data);
 }
 
-/* =====================================================
-   FINAL PROMPT BUILDER
-===================================================== */
+function calculate(data) {
+  const reversed = data.reversed_questions;
+  const scores = { calmness: [], clarity: [], energy: [], readiness: [] };
 
-export function buildFinalPrompt(userMessage, context) {
-  return [
-    {
-      role: "system",
-      content: SYSTEM_PROMPT
-    },
-    {
-      role: "system",
-      content: CONVERSATION_POLICY
-    },
-    {
-      role: "system",
-      content: buildStateInstruction(context)
-    },
-    {
-      role: "user",
-      content: userMessage
-    }
-  ];
+  data.questions.forEach(q => {
+    let v = Number(document.getElementById(`q${q.id}`).value);
+    if (reversed.includes(q.id)) v = 6 - v;
+    scores[q.category].push(v);
+  });
+
+  const avg = arr => arr.reduce((a,b)=>a+b,0) / arr.length;
+
+  finalResult = {
+    calmness: avg(scores.calmness),
+    clarity: avg(scores.clarity),
+    energy: avg(scores.energy),
+    readiness: avg(scores.readiness)
+  };
+
+  if (finalResult.calmness < 3) finalResult.path = "آرامش ذهن";
+  else if (finalResult.clarity < 3) finalResult.path = "خودشناسی";
+  else finalResult.path = "موفقیت شغلی";
+
+  showResult();
+}
+
+function showResult() {
+  document.getElementById("resultBox").classList.remove("hidden");
+  document.getElementById("resultText").innerHTML = `
+    🧘 آرامش: ${finalResult.calmness.toFixed(1)}<br>
+    🔍 وضوح: ${finalResult.clarity.toFixed(1)}<br>
+    🔋 انرژی: ${finalResult.energy.toFixed(1)}<br>
+    🌱 آمادگی: ${finalResult.readiness.toFixed(1)}<br><br>
+    <b>مسیر پیشنهادی:</b> ${finalResult.path}
+  `;
+
+  // ✅ فراخوانی امن
+  window.startChat(finalResult.path);
 }

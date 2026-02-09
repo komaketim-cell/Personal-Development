@@ -10,32 +10,26 @@
 
 <div class="container">
   <h1>چت‌بات توسعه فردی 🌿</h1>
-  <p class="intro">
-    چند سؤال کوتاه پاسخ بده تا مسیر رشد مناسب تو مشخص بشه، بعد با هم گفت‌وگو رو شروع می‌کنیم.
-  </p>
+  <p>به چند سؤال کوتاه پاسخ بده، بعد وارد گفت‌وگوی هوشمند می‌شیم.</p>
 
-  <!-- Assessment -->
   <div id="quiz"></div>
   <button id="submitBtn">مشاهده نتیجه</button>
 
-  <!-- Result -->
   <div id="resultBox" class="hidden">
-    <h2>نتیجه ارزیابی</h2>
+    <h3>نتیجه ارزیابی</h3>
     <p id="resultText"></p>
   </div>
 
-  <!-- Chat -->
+  <!-- CHAT -->
   <div id="chatBox" class="hidden">
     <div id="chatMessages"></div>
 
     <div class="chat-input">
-      <input type="text" id="userInput" placeholder="احساست رو بنویس..." />
+      <input id="userInput" placeholder="احساست رو بنویس..." />
       <button id="sendBtn">ارسال</button>
     </div>
   </div>
 </div>
-
-<footer>© 2026 MindGrowth Bot</footer>
 
 <script src="script.js"></script>
 <script src="chat_logic.js"></script>

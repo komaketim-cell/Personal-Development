@@ -1,35 +1,44 @@
-console.log("✅ chat_logic.js loaded");
+console.log("✅ chat_logic.js (State Machine) loaded");
 
-/* =========================
-   GLOBAL STATE
-========================= */
-let chatState = {
-  phase: "INIT", // INIT | EMOTION | CHOICE | ACTION
-  lastEmotion: "",
-  selectedAction: ""
+/* =====================================================
+   STATE MACHINE & CONTEXT
+===================================================== */
+
+const ChatPhases = {
+  INIT: "INIT",
+  EMOTION: "EMOTION",
+  CHOICE: "CHOICE",
+  ACTION: "ACTION"
 };
 
-/* =========================
-   START CHAT
-========================= */
+let chatContext = {
+  phase: ChatPhases.INIT,
+  emotion: null,
+  emotionLabel: "",
+  goal: null,
+  depth: 1
+};
+
+/* =====================================================
+   PUBLIC API (GLOBAL)
+===================================================== */
+
 window.startChat = function (path) {
   const chatBox = document.getElementById("chatBox");
   chatBox.classList.remove("hidden");
 
-  chatState.phase = "EMOTION";
+  chatContext.phase = ChatPhases.EMOTION;
+  chatContext.goal = path;
 
   addBotMessage(
     `خوشحالم که اینجایی 🌿<br>
-     بر اساس ارزیابی، تمرکز ما روی <b>${path}</b> هست.<br>
-     دوست دارم اول بدونم: الان چه احساسی داری؟`
+     تمرکز فعلی ما روی <b>${path}</b> هست.<br>
+     قبل از هر چیز، دوست دارم بدونم الان چه احساسی داری؟`
   );
 
   document.getElementById("sendBtn").onclick = window.sendMessage;
 };
 
-/* =========================
-   SEND MESSAGE
-========================= */
 window.sendMessage = function () {
   const input = document.getElementById("userInput");
   const text = input.value.trim();
@@ -38,127 +47,160 @@ window.sendMessage = function () {
   addUserMessage(text);
   input.value = "";
 
-  handleUserMessage(text);
+  routeMessage(text);
 };
 
-/* =========================
-   CORE LOGIC
-========================= */
-function handleUserMessage(text) {
-  switch (chatState.phase) {
-    case "EMOTION":
-      handleEmotion(text);
+/* =====================================================
+   ROUTER
+===================================================== */
+
+function routeMessage(text) {
+  switch (chatContext.phase) {
+    case ChatPhases.EMOTION:
+      onEmotion(text);
       break;
 
-    case "CHOICE":
-      handleChoice(text);
+    case ChatPhases.CHOICE:
+      onChoice(text);
       break;
 
-    case "ACTION":
-      addBotMessage("اگر دوست داری ادامه بدیم، بگو 🌱");
+    case ChatPhases.ACTION:
+      onAction(text);
       break;
+
+    default:
+      addBotMessage("یه لحظه صبر کن 🌱");
   }
 }
 
-/* =========================
-   STEP 1: EMOTION
-========================= */
-function handleEmotion(text) {
-  chatState.lastEmotion = detectEmotion(text);
-  chatState.phase = "CHOICE";
+/* =====================================================
+   PHASE 1: EMOTION
+===================================================== */
+
+function onEmotion(text) {
+  const emotionData = detectEmotion(text);
+
+  chatContext.emotion = emotionData.key;
+  chatContext.emotionLabel = emotionData.label;
+  chatContext.phase = ChatPhases.CHOICE;
 
   addBotMessage(
-    `${chatState.lastEmotion}<br><br>
-     الان ترجیح می‌دی کدومو انجام بدیم؟<br>
+    `${emotionData.label}<br><br>
+     دوست داری الان کدوم مسیر رو بریم؟<br>
      1️⃣ آروم شدن سریع<br>
      2️⃣ شفاف شدن موضوع<br>
      3️⃣ فقط حرف بزنیم`
   );
 }
 
-/* =========================
-   STEP 2: CHOICE
-========================= */
-function handleChoice(text) {
+/* =====================================================
+   PHASE 2: CHOICE
+===================================================== */
+
+function onChoice(text) {
   if (text.includes("1")) {
-    chatState.selectedAction = "calm";
-    chatState.phase = "ACTION";
-    startBreathingExercise();
+    chatContext.goal = "calm";
+    chatContext.phase = ChatPhases.ACTION;
+    startCalmAction();
     return;
   }
 
   if (text.includes("2")) {
-    chatState.selectedAction = "clarity";
-    chatState.phase = "ACTION";
-    askClarityQuestion();
+    chatContext.goal = "clarity";
+    chatContext.phase = ChatPhases.ACTION;
+    startClarityAction();
     return;
   }
 
   if (text.includes("3")) {
-    chatState.selectedAction = "talk";
-    chatState.phase = "ACTION";
-    openTalkSpace();
+    chatContext.goal = "talk";
+    chatContext.phase = ChatPhases.ACTION;
+    startTalkAction();
     return;
   }
 
-  addBotMessage("برای انتخاب، فقط عدد 1، 2 یا 3 رو بفرست 🌿");
+  addBotMessage("فقط عدد 1، 2 یا 3 رو بفرست 🌿");
 }
 
-/* =========================
-   ACTIONS
-========================= */
-function startBreathingExercise() {
+/* =====================================================
+   PHASE 3: ACTION
+===================================================== */
+
+function onAction(text) {
   addBotMessage(
-    `باشه 🌿<br>
-     با هم ۳۰ ثانیه نفس می‌کشیم:<br>
-     ⏺️ ۴ ثانیه دم<br>
-     ⏸️ ۴ ثانیه نگه‌دار<br>
-     🔽 ۶ ثانیه بازدم<br><br>
-     وقتی تموم شد، فقط بنویس «تمام شد»`
+    "من باهات هستم 🌱<br>اگر دوست داری عمیق‌تر ادامه بدیم، بنویس «ادامه»."
   );
 }
 
-function askClarityQuestion() {
+/* =====================================================
+   ACTION IMPLEMENTATIONS
+===================================================== */
+
+function startCalmAction() {
+  addBotMessage(
+    `باشه 🌿<br>
+     یه تمرین کوتاه:<br>
+     🔹 ۴ ثانیه دم<br>
+     🔹 ۴ ثانیه نگه‌دار<br>
+     🔹 ۶ ثانیه بازدم<br><br>
+     وقتی تموم شد، بنویس «تمام شد».`
+  );
+}
+
+function startClarityAction() {
   addBotMessage(
     `باشه 🌱<br>
-     اگر بخوای این حس رو در یک جمله خلاصه کنی، بیشتر مربوط به:<br>
+     این حس بیشتر به کدوم بخش زندگیت مربوطه؟<br>
      🔹 کار<br>
      🔹 رابطه<br>
      🔹 خودت<br>
-     🔹 آینده<br><br>
-     کدومش؟`
+     🔹 آینده`
   );
 }
 
-function openTalkSpace() {
+function startTalkAction() {
   addBotMessage(
-    `من اینجام 🌸<br>
-     هر چی دوست داری بنویس، بدون قضاوت می‌خونم.`
+    `من گوش می‌دم 🌸<br>
+     هر چی دوست داری بنویس.`
   );
 }
 
-/* =========================
-   EMOTION DETECTION (SIMPLE)
-========================= */
+/* =====================================================
+   EMOTION DETECTION (MVP LEVEL)
+===================================================== */
+
 function detectEmotion(text) {
-  if (text.includes("استرس") || text.includes("خسته")) {
-    return "به نظر میاد الان فشار و خستگی روی ذهنت هست 🌿";
+  if (text.includes("استرس") || text.includes("فشار") || text.includes("خسته")) {
+    return {
+      key: "stress",
+      label: "به نظر میاد ذهنت تحت فشاره و خسته‌ای 🌿"
+    };
   }
 
   if (text.includes("گیج") || text.includes("نمی‌دونم")) {
-    return "احساس سردرگمی داری، و این کاملاً قابل درکه 🌱";
+    return {
+      key: "confusion",
+      label: "یه حس سردرگمی توی حرف‌هات هست، و این قابل درکه 🌱"
+    };
   }
 
-  if (text.includes("ناراحت") || text.includes("غمگین")) {
-    return "به نظر میاد یه ناراحتی زیر این حرف‌ها هست 💙";
+  if (text.includes("غم") || text.includes("ناراحت")) {
+    return {
+      key: "sadness",
+      label: "انگار یه ناراحتی آروم زیر این حس‌ها هست 💙"
+    };
   }
 
-  return "ممنون که احساست رو گفتی 🌸";
+  return {
+    key: "neutral",
+    label: "ممنون که احساست رو با من در میون گذاشتی 🌸"
+  };
 }
 
-/* =========================
+/* =====================================================
    UI HELPERS
-========================= */
+===================================================== */
+
 function addBotMessage(text) {
   const box = document.getElementById("chatMessages");
   box.innerHTML += `<div class="message bot">${text}</div>`;
